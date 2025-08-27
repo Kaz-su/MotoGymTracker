@@ -206,7 +206,11 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         // ミリ秒がすべてゼロの場合は読まない
         if (milliseconds > 0) {
-            speechParts.add("${milliseconds}")
+            val msStr = String.format("%03d", milliseconds)
+            for (i in msStr.indices) {
+                // .123 のようなときに「ひゃくにじゅうさん」と読み上げられるのを防ぐ
+                speechParts.add("${msStr[i]} ")
+            }
         }
         
         // 全て0の場合は「れいびょう」

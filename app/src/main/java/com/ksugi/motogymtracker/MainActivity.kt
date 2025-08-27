@@ -40,6 +40,12 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private var tts: TextToSpeech? = null // TextToSpeech インスタンス用
 
+    companion object {
+        private const val ACTION_COOLDOWN_MS = 1000L // 1秒のクールダウン
+    }
+    private var lastStartTimeMs: Long = 0L
+    private var lastStopTimeMs: Long = 0L
+
     private val stopwatchRunnable = object : Runnable {
         override fun run() {
             if (activeLaps.isEmpty()) {
@@ -128,8 +134,14 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun startNewLap() {
-        val newLapStartTime = System.currentTimeMillis()
-        // 新しいラップの番号を決定 (既存の完了ラップ数 + 既存の進行中ラップ数 + 1)
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastStartTimeMs < ACTION_COOLDOWN_MS) {
+            return // クールダウン中は何もしない
+        }
+        lastStartTimeMs = currentTime // 実行時刻を更新
+
+        // 新しいラップの開始処理
+        val newLapStartTime = System.currentTimeMillis() // この時刻はラップ自体の開始時刻
         val lapNumber = lapTimes.size + activeLaps.size + 1
         val newLap = LapInfo(startTime = newLapStartTime, currentElapsedTime = 0L, lapNumber = lapNumber)
         activeLaps.add(newLap)
@@ -140,6 +152,12 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun stopOldestLapAndRecord() {
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastStopTimeMs < ACTION_COOLDOWN_MS) {
+            return // クールダウン中は何もしない
+        }
+        lastStopTimeMs = currentTime // 実行時刻を更新
+
         if (activeLaps.isNotEmpty()) {
             val oldestLap = activeLaps.removeAt(0)
             val finalElapsedTime = System.currentTimeMillis() - oldestLap.startTime
